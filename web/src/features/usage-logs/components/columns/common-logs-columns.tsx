@@ -57,6 +57,7 @@ import {
   isPerCallBilling,
 } from '../../lib/utils'
 import type { LogOtherData } from '../../types'
+import { CacheHitRateCell } from '../cache-hit-rate-cell'
 import { DetailsDialog } from '../dialogs/details-dialog'
 import { LogCostDisplay } from '../log-cost-display'
 import { ModelBadge } from '../model-badge'
@@ -688,6 +689,24 @@ export function useCommonLogsColumns(isAdmin: boolean): ColumnDef<UsageLog>[] {
           </div>
         )
       },
+    },
+    {
+      id: 'cache_hit',
+      header: t('Cache Hit'),
+      enableSorting: false,
+      cell: ({ row }) => {
+        const log = row.original
+        if (!isDisplayableLogType(log.type)) return null
+
+        const other = parseLogOther(log.other)
+        return (
+          <CacheHitRateCell
+            promptTokens={log.prompt_tokens || 0}
+            other={other}
+          />
+        )
+      },
+      meta: { label: t('Cache Hit') },
     },
     {
       accessorKey: 'quota',

@@ -66,6 +66,12 @@ func ResponsesHelper(c *gin.Context, info *relaycommon.RelayInfo) (newAPIError *
 		return types.NewError(fmt.Errorf("failed to copy request to GeneralOpenAIRequest: %w", err), types.ErrorCodeInvalidRequest, types.ErrOptionWithSkipRetry())
 	}
 
+	if sanitizedInput, changed, err := sanitizeResponsesInput(request.Input); err != nil {
+		return types.NewError(fmt.Errorf("failed to sanitize Responses input: %w", err), types.ErrorCodeInvalidRequest, types.ErrOptionWithSkipRetry())
+	} else if changed {
+		request.Input = sanitizedInput
+	}
+
 	err = helper.ModelMappedHelper(c, info, request)
 	if err != nil {
 		return types.NewError(err, types.ErrorCodeChannelModelMappedError, types.ErrOptionWithSkipRetry())

@@ -47,6 +47,7 @@ import {
   isTimingLogType,
 } from '../lib/utils'
 import type { LogCategory } from '../types'
+import { CacheHitRateCell } from './cache-hit-rate-cell'
 import { StreamTpsCell, TimingMetricsCell } from './timing-metrics-cell'
 import { useUsageLogsContext } from './usage-logs-provider'
 
@@ -358,6 +359,22 @@ function CommonLogsCard<TData>({
           <MobileTokensField log={rowData} />
         ) : (
           <SummaryField cell={cells.get('prompt_tokens')} />
+        )}
+        {rowData ? (
+          <div className='bg-muted/20 min-w-0 rounded-md px-2 py-1.5'>
+            <div className='text-muted-foreground mb-1 text-[11px] leading-none font-medium select-none'>
+              {t('Cache Hit')}
+            </div>
+            <CacheHitRateCell
+              promptTokens={rowData.prompt_tokens || 0}
+              other={parseLogOther(rowData.other)}
+            />
+          </div>
+        ) : (
+          <SummaryField
+            label={t('Cache Hit')}
+            cell={cells.get('cache_hit')}
+          />
         )}
         <SummaryField
           label={t('Details')}
