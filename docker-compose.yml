@@ -2,7 +2,7 @@ version: '3.4'
 
 services:
   new-api:
-    image: new-api:rc30-codex-id-compat-20260831
+    image: new-api:rc33-codex-id-compat-20260905
     pull_policy: never
     container_name: new-api
     restart: always
