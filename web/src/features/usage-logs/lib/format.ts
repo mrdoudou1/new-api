@@ -331,6 +331,80 @@ export function hasAnyCacheTokens(
   )
 }
 
+export type CacheHitRateTone =
+  | 'none'
+  | 'zero'
+  | 'low'
+  | 'medium'
+  | 'high'
+  | 'excellent'
+
+export interface CacheHitRateSummary {
+  promptTokens: number
+  cacheReadTokens: number
+  cacheWriteTokens: number
+  inputTokens: number
+  percent: number | null
+  tone: CacheHitRateTone
+}
+
+export function getCacheHitRateSummary(
+  promptTokens: number,
+  other: LogOtherData | null | undefined
+): CacheHitRateSummary {
+  const cacheReadTokens = Math.max(0, other?.cache_tokens || 0)
+  const safePrompt = Math.max(0, promptTokens || 0)
+  const cacheWrite5m = Math.max(0, other?.cache_creation_tokens_5m || 0)
+  const cacheWrite1h = Math.max(0, other?.cache_creation_tokens_1h || 0)
+  const cacheWriteTokens =
+    cacheWrite5m > 0 || cacheWrite1h > 0
+      ? cacheWrite5m + cacheWrite1h
+      : Math.max(0, other?.cache_creation_tokens || 0)
+  const isClaude =
+    other?.claude === true || other?.usage_semantic === 'anthropic'
+  const inputTokens = isClaude
+    ? safePrompt + cacheReadTokens + cacheWriteTokens
+    : safePrompt
+
+  if (inputTokens <= 0) {
+    return {
+      promptTokens: safePrompt,
+      cacheReadTokens,
+      cacheWriteTokens,
+      inputTokens,
+      percent: null,
+      tone: 'none',
+    }
+  }
+
+  const percent = Math.max(
+    0,
+    Math.min(100, (cacheReadTokens / inputTokens) * 100)
+  )
+  let tone: CacheHitRateTone = 'zero'
+  if (percent >= 95) tone = 'excellent'
+  else if (percent >= 80) tone = 'high'
+  else if (percent >= 50) tone = 'medium'
+  else if (percent > 0) tone = 'low'
+
+  return {
+    promptTokens: safePrompt,
+    cacheReadTokens,
+    cacheWriteTokens,
+    inputTokens,
+    percent,
+    tone,
+  }
+}
+
+export function formatCacheHitRate(percent: number | null): string {
+  if (percent == null || !Number.isFinite(percent)) return '-'
+  if (percent <= 0) return '0%'
+  if (percent >= 99.5) return '100%'
+  if (percent < 10) return `${percent.toFixed(1)}%`
+  return `${Math.round(percent)}%`
+}
+
 export function getTieredBillingSummary(
   other: LogOtherData | null
 ): TieredBillingSummary | null {
